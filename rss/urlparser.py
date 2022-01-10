@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import requests
-from typing import List, Dict, Union, Optional
-from bs4 import BeautifulSoup
 from abc import ABC, abstractmethod
+from typing import Dict, List, Optional, Union
 
 import pydantic
+import requests
+from bs4 import BeautifulSoup
 
 
 class TextBody(pydantic.BaseModel):
@@ -24,9 +24,10 @@ class TextBody(pydantic.BaseModel):
 
 
 class UrlParser(ABC):
-    def __init__(self, url: str, host: str) -> None:
+    def __init__(self, url: str, host: str, name: str) -> None:
         self.url = url
         self.host = host
+        self.name = name
         self.entry_point = None
         self.results = {}
         self.spider = requests.Session()

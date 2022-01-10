@@ -11,7 +11,7 @@ class TensorFlowBlog(UrlParser):
     """ A parser for fetching blog links from the TensorFlow website: https://blog.tensorflow.org/
     """
     def __init__(self, url: str, host: str) -> None:
-        super().__init__(url, host)
+        super().__init__(url, host, 'tensorflow')
 
     def parse(self, soup: BeautifulSoup):
         """Return dictioanry of blog links, titles and date.

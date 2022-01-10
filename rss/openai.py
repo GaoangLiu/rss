@@ -11,7 +11,7 @@ class OpenAI(UrlParser):
     """ A parser for fetching blog links from the OpenAI website: https://openai.com/blog/
     """
     def __init__(self, url: str, host: str) -> None:
-        super().__init__(url, host)
+        super().__init__(url, host, 'openai')
 
     def parse(self, soup: BeautifulSoup):
         """Return dictioanry of blog links, titles and date.
