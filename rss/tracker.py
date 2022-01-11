@@ -60,6 +60,7 @@ class BlogTracker(object):
         redis_key = 'rss_{}'.format(self.parser.name)
         cf.info('found new blog', str(diff))
         cf.info('results stored in redis', redis_key)
+        new.update(old)
         self.redis.set_key(redis_key, json.dumps(new), ex=86400 * 30)
         return [(key, new[key]) for key in diff]
 
@@ -84,13 +85,14 @@ class TelegramChannelPoster:
         bot = auth[self.bot_name]
         channel = auth[self.channel_name]
         resp = Telegram.post_to_channel(bot, channel, msg)
+        msg = f"message {msg} SUCCESSFULLY posted to {channel}"
         if resp.status_code == 200:
-            cf.info("message {} SUCCESSFULLY posted to {}".format(
-                msg, channel))
+            cf.info(msg)
             return True
-        cf.error("message {} posting to {} failed".format(msg, channel))
-        cf.error(resp)
-        return False
+        else:
+            msg += f", {resp}"
+            cf.error(msg)
+            return False
 
 
 def main():
@@ -98,5 +100,7 @@ def main():
     for _, v in BLOG_SOURCES.items():
         parser = v['parser'](v['host'], v['url'])
         bt = BlogTracker(parser)
+
         for digest in bt.track():
+            cf.info(bt.format(digest))
             tcp.post(bt.format(digest))

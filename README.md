@@ -3,6 +3,7 @@ A simple blog, with topics retricted to NLP & ML, urls generator.
 Supported sites include:
 - https://openai.com
 - https://blog.tensorflow.org
+- https://tech.meituan.com
 
 Blog titles, links and dates will be parsed out and cached into redis. Daily digests are issued through (personal) Telegram channel.
 

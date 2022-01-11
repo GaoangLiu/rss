@@ -31,6 +31,7 @@ class UrlParser(ABC):
         self.entry_point = None
         self.results = {}
         self.spider = requests.Session()
+        self.spider.encoding = 'utf-8'
         self.spider.headers.update({
             'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
@@ -40,7 +41,7 @@ class UrlParser(ABC):
         """Return a BeautifulSoup object.
         """
         response = self.spider.get(self.url)
-        return BeautifulSoup(response.text, 'html.parser')
+        return BeautifulSoup(response.content, 'html.parser')
 
     @abstractmethod
     def parse(

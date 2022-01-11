@@ -1,5 +1,6 @@
 from rss.openai import OpenAI
 from rss.tensorflow import TensorFlowBlog
+from rss.meituan import MeiTuan
 
 BLOG_SOURCES = {
     'tensorflow': {
@@ -12,6 +13,11 @@ BLOG_SOURCES = {
         'host': 'https://openai.com/blog/',
         'url': 'https://openai.com/blog/',
         'parser': OpenAI
+    },
+    'meituan': {
+        'host': 'https://tech.meituan.com/',
+        'url': 'https://tech.meituan.com/',
+        'parser': MeiTuan
     }
 }
 
