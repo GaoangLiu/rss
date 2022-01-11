@@ -13,8 +13,9 @@ class TextBody(pydantic.BaseModel):
     url: str
     title: str
     date: str
-    tag: Optional[str]
-    author: Optional[str]
+    extra_url: Optional[str] = None
+    tag: Optional[str] = None
+    author: Optional[str] = None
 
     def __str__(self) -> str:
         str_ = ""

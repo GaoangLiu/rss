@@ -1,17 +1,17 @@
 #!/usr/bin/env python
+import random
 import urllib
 from typing import Dict, List, Optional, Set, Tuple, Union
 
 from bs4 import BeautifulSoup
 
+from rss.toolkits import shorten_url
 from rss.urlparser import TextBody, UrlParser
-import random
 
 
 class MeiTuan(UrlParser):
     """ A parser for fetching blog links from the: tech.meituan.com
     """
-
     def __init__(self, url: str, host: str) -> None:
         super().__init__(url, host, 'meituan')
 
@@ -19,7 +19,9 @@ class MeiTuan(UrlParser):
         """rewrite UrlParser.fetch_soup(), because blogs are presented among multiple pages 
         """
         urls = [
-            'https://tech.meituan.com/page/{}.html'.format(i) for i in range(1, 25)]
+            'https://tech.meituan.com/page/{}.html'.format(i)
+            for i in range(1, 25)
+        ]
         random_url = random.choice(urls)
         response = self.spider.get(random_url)
         return BeautifulSoup(response.content, 'html.parser')
@@ -38,6 +40,7 @@ class MeiTuan(UrlParser):
             blog = {}
             blog['title'] = link.text
             blog['url'] = link.find('a').get('href')
+            blog['extra_url'] = shorten_url(blog['url'])
             blog['date'] = 'N/A'
             if not blog['title']:
                 continue
