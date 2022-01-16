@@ -7,7 +7,7 @@ class RedisClient(Redis):
         super().__init__(host=host, port=port, password=password)
     
     def get_key(self, key)->str:
-        return self.get(key) or "{}"
+        return self.get(key)
 
     def set_key(self, key:str, value:str, *args, **kwargs):
         return self.set(key, value, *args, **kwargs)
