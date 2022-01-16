@@ -62,7 +62,7 @@ class AnyNews(ABC):
         new_ids = set(map(lambda e: e.uid, new))
         latest = new_ids - old_ids
         latest = [e for e in new if e.uid in latest]
-        all_ = [e for e in old if e.uid in new_ids] + latest
+        all_ = latest + old
         return latest, all_
 
     def get_archives(self) -> List[Article]:

@@ -13,7 +13,7 @@ class Schedular(object):
 
     def run(self):
         self.timer += 1
-        if self.timer % self.shift_time == 0:
+        if self.timer >= self.shift_time:
             cf.info("Schedular: %s is running" % self.__class__.__name__)
             self.timer = 0
             self.action()
@@ -30,10 +30,8 @@ class DailyBlogTracker(Schedular):
 
 class LeiPhoneAIRss(Schedular):
     def action(self):
-
         worker = LeiPhoneAI()
         latest, all_ = worker.pipeline()
-        latest = all_[0:1]
         if not latest:
             cf.info('No new articles')
             return
@@ -54,23 +52,20 @@ class WechatPublicRss(Schedular):
         latest, all_ = self.worker.pipeline()
         if not latest:
             cf.info('no new articles')
-            tcp.post(all_[0].telegram_format())
-            exit(0)
+            return
 
         self.worker.save_to_redis(all_)
         cf.info('all articles saved to redis')
 
         for article in latest:
             cf.info(article.telegram_format())
-            # tcp.post(article.telegram_format())
-
-        # tcp.post(latest[0].telegram_format())
-        exit(0)
+            tcp.post(article.telegram_format())
 
 
 class SchedularManager(object):
     def __init__(self):
         self.schedulars = []
+        self.timer = 0
 
     def add_schedular(self, schedular):
         self.schedulars.append(schedular)
@@ -80,12 +75,19 @@ class SchedularManager(object):
             for schedular in self.schedulars:
                 schedular.run()
             time.sleep(1)
+            self.timer += 1
+            if self.timer >= 60:
+                cf.info("SchedularManager is running")
+                self.timer = 0
 
 
 if __name__ == '__main__':
     sm = SchedularManager()
-    # sm.add_schedular(WechatPublicRss(shift_time=3, wechat_id='almosthuman'))
-    sm.add_schedular(WechatPublicRss(shift_time=3, wechat_id='aifront'))
-    # sm.add_schedular(LeiPhoneAIRss(shift_time=3))
-    # sm.add_schedular(DailyBlogTracker(shift_time=3600 * 24))
+    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))
+    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))
+    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='almosthuman'))
+    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='yuntoutiao'))
+    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='aifront'))
+    sm.add_schedular(LeiPhoneAIRss(shift_time=3600))
+    sm.add_schedular(DailyBlogTracker(shift_time=3600 * 24))
     sm.run()
