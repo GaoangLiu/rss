@@ -4,9 +4,9 @@ from typing import Dict, List, Tuple
 
 import codefast as cf
 
-from rss.keys import BLOG_SOURCES
-from rss.urlparser import TextBody, UrlParser
-from rss.apps.tg import tcp
+from rss.apps.data import BLOG_SOURCES
+from rss.base.urlparser import TextBody, UrlParser
+from rss.core.tg import tcp
 
 from rss.core import Initiator
 

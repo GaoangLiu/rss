@@ -1,7 +1,9 @@
+import random
+import time
 import codefast as cf
 import requests
 from rss.core import AuthOnce
-from rss.keys import TELEGRAM
+from rss.data import TELEGRAM
 
 
 class Telegram(object):
@@ -23,6 +25,8 @@ class TelegramChannelPoster(object):
         self.channel_name = channel_name
 
     def post(self, msg: str) -> bool:
+        # To avoid 429 error, https://bit.ly/3tzcVhF
+        time.sleep(random.randint(1, 3))
         auth = AuthOnce().info()
         bot = auth[self.bot_name]
         channel = auth[self.channel_name]

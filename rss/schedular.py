@@ -1,5 +1,5 @@
 import codefast as cf
-from rss.apps.tg import tcp
+from rss.core.tg import tcp
 import time
 import random
 from rss.tracker import main as blog_main

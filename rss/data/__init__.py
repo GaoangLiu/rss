@@ -25,3 +25,5 @@ WECHAT_PUBLIC = {
         'redis_subkey': 'infoq',
     },
 }
+
+TELEGRAM = {'bot_name': 'hema_bot', 'channel_name': 'global_news_podcast'}

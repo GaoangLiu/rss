@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from bs4 import BeautifulSoup
 
-from rss.toolkits import shorten_url
-from rss.urlparser import TextBody, UrlParser
+from rss.core import shorten_url
+from rss.base.urlparser import TextBody, UrlParser
 
 
 class MeiTuan(UrlParser):

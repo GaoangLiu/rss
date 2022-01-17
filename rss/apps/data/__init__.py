@@ -1,6 +1,6 @@
-from rss.openai import OpenAI
-from rss.tensorflow import TensorFlowBlog
-from rss.meituan import MeiTuan
+from rss.apps.meituan import MeiTuan
+from rss.apps.openai import OpenAI
+from rss.apps.tensorflow import TensorFlowBlog
 
 BLOG_SOURCES = {
     'tensorflow': {
@@ -20,11 +20,3 @@ BLOG_SOURCES = {
         'parser': MeiTuan
     }
 }
-
-REDIS_MAP = {
-    'host': 'ali_redis_host',
-    'port': 'ali_redis_port',
-    'pass': 'ali_redis_pass'
-}
-
-TELEGRAM = {'bot_name': 'hema_bot', 'channel_name': 'global_news_podcast'}

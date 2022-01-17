@@ -1,7 +1,7 @@
 import requests
 
 
-def shorten_url(url:str):
+def shorten_url(url: str):
     params = {
         'long_url': url,
         'custom_path': '',

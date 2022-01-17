@@ -1,9 +1,10 @@
-from abc import abstractmethod, ABC
-from typing import NamedTuple, List, Tuple
-from rss.core import Spider, Initiator
-from bs4 import BeautifulSoup
 import json
-from rss.toolkits import shorten_url
+from abc import ABC, abstractmethod
+from typing import List, NamedTuple, Tuple
+
+from bs4 import BeautifulSoup
+
+from rss.core import Initiator, Spider, shorten_url
 
 
 class Article(NamedTuple):

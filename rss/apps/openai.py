@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 from bs4 import BeautifulSoup
 
-from rss.urlparser import TextBody, UrlParser
+from rss.base.urlparser import TextBody, UrlParser
 
 
 class OpenAI(UrlParser):
