@@ -79,7 +79,7 @@ class AnyNews(ABC):
                                   ensure_ascii=True)
         self.redis.set_key(self.type, str_articles, ex=60 * 60 * 24 * 30)
 
-    def pipeline(self) -> List[Article]:
+    def pipeline(self) -> Tuple[List[Article]]:
         soup = self.get_soup()
         articles = self.search_articles(soup)
         archives = self.get_archives()

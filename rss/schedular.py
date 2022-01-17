@@ -1,11 +1,14 @@
-import codefast as cf
-from rss.core.tg import tcp
-import time
 import random
-from rss.tracker import main as blog_main
-from rss.base.wechat_public import create_rss_worker
-from rss.apps.leiphone import LeiPhoneAI
+import time
+
+import codefast as cf
+
 from rss.apps.huggingface import HuggingFace
+from rss.apps.leiphone import LeiPhoneAI
+from rss.apps.rust import RustLangDoc
+from rss.base.wechat_public import create_rss_worker
+from rss.core.tg import tcp
+from rss.tracker import main as blog_main
 
 
 class Schedular(object):
@@ -53,6 +56,11 @@ class HuggingFaceRss(Schedular):
         self.run_worker(HuggingFace())
 
 
+class RustLanguageDoc(Schedular):
+    def action(self):
+        self.run_worker(RustLangDoc())
+
+
 class WechatPublicRss(Schedular):
     def __init__(self, shift_time: int = 3600, wechat_id: str = 'almosthuman'):
         super().__init__(shift_time=shift_time)
@@ -86,6 +94,7 @@ def rsspy():
     SchedularManager()\
         .add_schedular(LeiPhoneAIRss(shift_time=3600))\
         .add_schedular(HuggingFaceRss(shift_time=3600))\
+        .add_schedular(RustLanguageDoc(shift_time=3600 * 24))\
         .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
