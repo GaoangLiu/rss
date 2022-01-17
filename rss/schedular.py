@@ -1,22 +1,37 @@
 import codefast as cf
 from rss.apps.tg import tcp
 import time
+import random
 from rss.tracker import main as blog_main
 from rss.base.wechat_public import create_rss_worker
 from rss.apps.leiphone import LeiPhoneAI
+from rss.apps.huggingface import HuggingFace
 
 
 class Schedular(object):
-    def __init__(self, shift_time: int = 3600):
-        self.shift_time = shift_time
+    def __init__(self, shift_time: int = 3600, add_disturb: bool = True):
+        # Add disturb to avoid multiple updates posted at exactly the same time
+        self.shift_time = shift_time + \
+            (random.randint(-1800, 3600) if add_disturb else 0)
         self.timer = 0
 
     def run(self):
         self.timer += 1
         if self.timer >= self.shift_time:
-            cf.info("Schedular: %s is running" % self.__class__.__name__)
+            cf.info("schedular: %s is running" % self.__class__.__name__)
             self.timer = 0
             self.action()
+
+    def run_worker(self, worker):
+        latest, all_ = worker.pipeline()
+        if not latest:
+            cf.info('no new articles')
+        else:
+            worker.save_to_redis(all_)
+            cf.info('all articles saved to redis')
+            for article in latest:
+                cf.info(article)
+                tcp.post(article.telegram_format())
 
 
 class DailyBlogTracker(Schedular):
@@ -30,17 +45,12 @@ class DailyBlogTracker(Schedular):
 
 class LeiPhoneAIRss(Schedular):
     def action(self):
-        worker = LeiPhoneAI()
-        latest, all_ = worker.pipeline()
-        if not latest:
-            cf.info('No new articles')
-            return
+        self.run_worker(LeiPhoneAI())
 
-        worker.save_to_redis(all_)
-        cf.info('all articles saved to redis')
-        for article in latest:
-            cf.info(article)
-            tcp.post(article.telegram_format())
+
+class HuggingFaceRss(Schedular):
+    def action(self):
+        self.run_worker(HuggingFace())
 
 
 class WechatPublicRss(Schedular):
@@ -49,17 +59,7 @@ class WechatPublicRss(Schedular):
         self.worker = create_rss_worker(wechat_id)
 
     def action(self):
-        latest, all_ = self.worker.pipeline()
-        if not latest:
-            cf.info('no new articles')
-            return
-
-        self.worker.save_to_redis(all_)
-        cf.info('all articles saved to redis')
-
-        for article in latest:
-            cf.info(article.telegram_format())
-            tcp.post(article.telegram_format())
+        self.run_worker(self.worker)
 
 
 class SchedularManager(object):
@@ -67,8 +67,9 @@ class SchedularManager(object):
         self.schedulars = []
         self.timer = 0
 
-    def add_schedular(self, schedular):
+    def add_schedular(self, schedular) -> Schedular:
         self.schedulars.append(schedular)
+        return self
 
     def run(self):
         while True:
@@ -81,13 +82,18 @@ class SchedularManager(object):
                 self.timer = 0
 
 
+def rsspy():
+    SchedularManager()\
+        .add_schedular(LeiPhoneAIRss(shift_time=3600))\
+        .add_schedular(HuggingFaceRss(shift_time=3600))\
+        .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
+        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))\
+        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
+        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='almosthuman'))\
+        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='yuntoutiao'))\
+        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='aifront'))\
+        .run()
+
+
 if __name__ == '__main__':
-    sm = SchedularManager()
-    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))
-    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))
-    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='almosthuman'))
-    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='yuntoutiao'))
-    sm.add_schedular(WechatPublicRss(shift_time=3600, wechat_id='aifront'))
-    sm.add_schedular(LeiPhoneAIRss(shift_time=3600))
-    sm.add_schedular(DailyBlogTracker(shift_time=3600 * 24))
-    sm.run()
+    rsspy()
