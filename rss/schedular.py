@@ -7,6 +7,7 @@ from rss.apps.huggingface import HuggingFace
 from rss.apps.leiphone import LeiPhoneAI
 from rss.apps.rust import RustLangDoc
 from rss.base.wechat_public import create_rss_worker
+from rss.base.wechat_rss import create_rss_worker as create_wechat_rss_worker
 from rss.core.tg import tcp
 from rss.tracker import main as blog_main
 
@@ -70,6 +71,15 @@ class WechatPublicRss(Schedular):
         self.run_worker(self.worker)
 
 
+class WechatRssMonitor(Schedular):
+    def __init__(self, shift_time: int = 3600, wechat_id: str = 'almosthuman'):
+        super().__init__(shift_time=shift_time)
+        self.worker = create_wechat_rss_worker(wechat_id)
+
+    def action(self):
+        self.run_worker(self.worker)
+
+
 class SchedularManager(object):
     def __init__(self):
         self.schedulars = []
@@ -98,9 +108,9 @@ def rsspy():
         .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
-        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='almosthuman'))\
-        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='yuntoutiao'))\
-        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='aifront'))\
+        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='almosthuman'))\
+        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='yuntoutiao'))\
+        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='aifront'))\
         .run()
 
 

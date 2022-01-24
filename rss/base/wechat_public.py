@@ -34,7 +34,7 @@ class WechatPublic(AnyNews):
             title = div.text.replace('原创', '').strip()
             uid = base64.b64encode(title.encode('utf-8')).decode('utf-8')
             if uid in old_ids:
-                cf.info('articles old than {} already exists'.format(uid))
+                cf.info('articles old than {} already exists'.format(title))
                 return articles
 
             url = self.get_wechat_url(href)

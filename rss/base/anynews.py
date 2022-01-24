@@ -36,17 +36,25 @@ class DummyItem(NamedTuple):
 class AnyNews(ABC):
     """ check whether any new articles posted in a certain website
     """
+
     def __init__(self, main_url: str):
         self.main_url = main_url
         self.spider = Spider().born()
         self.type = 'anynews'
         self._redis = None
+        self._archives = None
 
     @property
     def redis(self):
         if not self._redis:
             self._redis = Initiator.redis()
         return self._redis
+
+    @property
+    def archives(self):
+        if not self._archives:
+            self._archives = self.get_archives()
+        return self._archives
 
     def get_soup(self) -> BeautifulSoup:
         soup = self.spider.get(self.main_url)
@@ -79,7 +87,7 @@ class AnyNews(ABC):
                                   ensure_ascii=True)
         self.redis.set_key(self.type, str_articles, ex=60 * 60 * 24 * 30)
 
-    def pipeline(self) -> Tuple[List[Article]]:
+    def pipeline(self) -> List[Article]:
         soup = self.get_soup()
         articles = self.search_articles(soup)
         archives = self.get_archives()

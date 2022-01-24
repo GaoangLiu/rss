@@ -1,16 +1,19 @@
+from authc import authc
+accs = authc()
+
 WECHAT_PUBLIC = {
     'almosthuman': {
-        'main_url': 'https://www.wxkol.com/show/almosthuman2014.html',
+        'main_url': accs['werss_almosthuman'],
         'source': '机器之心',
         'redis_subkey': 'almosthuman',
     },
     'yuntoutiao': {
-        'main_url': 'https://www.wxkol.com/show/yuntoutiao.html',
+        'main_url': accs['werss_yuntoutiao'],
         'source': '云头条',
         'redis_subkey': 'yuntoutiao',
     },
     'aifront': {
-        'main_url': 'https://www.wxkol.com/show/ai-front.html',
+        'main_url': accs['werss_aifront'],
         'source': 'AI前线',
         'redis_subkey': 'aifront',
     },
