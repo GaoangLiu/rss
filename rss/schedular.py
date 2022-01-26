@@ -115,4 +115,15 @@ def rsspy():
 
 
 if __name__ == '__main__':
-    rsspy()
+    from rss.base.wechat_rss import create_rss_worker
+    worker = create_rss_worker('almosthuman')
+    worker = create_rss_worker('yuntoutiao')
+    latest, all_ = worker.pipeline()
+    if not latest:
+        cf.info('no new articles')
+    else:
+        worker.save_to_redis(all_)
+        cf.info('all articles saved to redis')
+        for article in latest:
+            cf.info(article)
+            tcp.post(article.telegram_format())

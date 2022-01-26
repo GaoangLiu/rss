@@ -1,9 +1,9 @@
 import json
+import codefast as cf
 from abc import ABC, abstractmethod
 from typing import List, NamedTuple, Tuple
-
 from bs4 import BeautifulSoup
-
+from codefast.functools import naruto
 from rss.core import Initiator, Spider, shorten_url
 
 
@@ -54,6 +54,8 @@ class AnyNews(ABC):
     def archives(self):
         if not self._archives:
             self._archives = self.get_archives()
+        cf.info('found archives {} \nfor key {}'.format(
+            self._archives, self.type))
         return self._archives
 
     def get_soup(self) -> BeautifulSoup:
@@ -66,25 +68,23 @@ class AnyNews(ABC):
 
     def latest(self, old: List[Article],
                new: List[Article]) -> Tuple[List[Article]]:
-        # Return the latest articles
-        old_ids = set(map(lambda e: e.uid, old))
-        new_ids = set(map(lambda e: e.uid, new))
-        latest = new_ids - old_ids
-        latest = [e for e in new if e.uid in latest]
+        # Return a tuple: (the latest articles, all articles)
+        old_ids = set([e.uid for e in old])
+        latest_ids = set([e.uid for e in new if e.uid not in old_ids])
+        latest = [e for e in new if e.uid in latest_ids]
         all_ = latest + old
         return latest, all_
 
     def get_archives(self) -> List[Article]:
-        old = self.redis.get_key(self.type)
-        if not old:
-            return []
-        old = old.decode('utf-8').strip()
-        old = [Article(**e) for e in json.loads(old)]
-        return old
+        arch = naruto.load(self.redis.get_key,
+                           self.type).ensure_nontrivial_return(3, 10)
+        return [Article(**e) for e in json.loads(arch.decode('utf-8'))] if arch else []
 
     def save_to_redis(self, articles: List[Article]) -> None:
         str_articles = json.dumps([a._asdict() for a in articles],
                                   ensure_ascii=True)
+        cf.info('save to redis: {} with key {}'.format(str_articles,
+                                                       self.type))
         self.redis.set_key(self.type, str_articles, ex=60 * 60 * 24 * 30)
 
     def pipeline(self) -> List[Article]:
