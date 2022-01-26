@@ -7,6 +7,11 @@ WECHAT_PUBLIC = {
         'source': '机器之心',
         'redis_subkey': 'almosthuman',
     },
+    'rgznnds': {
+        'main_url': accs['werss_rgznnds'],
+        'source': '人工智能那点事',
+        'redis_subkey': 'rgznnds',
+    },
     'yuntoutiao': {
         'main_url': accs['werss_yuntoutiao'],
         'source': '云头条',

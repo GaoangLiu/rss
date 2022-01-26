@@ -110,6 +110,7 @@ def rsspy():
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
         .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='almosthuman'))\
         .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='yuntoutiao'))\
+        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='rgznnds'))\
         .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='aifront'))\
         .run()
 
