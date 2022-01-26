@@ -2,6 +2,11 @@ from authc import authc
 accs = authc()
 
 WECHAT_PUBLIC = {
+    'geekpark': {
+        'main_url': accs['werss_geekpark'],
+        'source': '极客公园',
+        'redis_subkey': 'geekpark'
+    },
     'almosthuman': {
         'main_url': accs['werss_almosthuman'],
         'source': '机器之心',
@@ -28,7 +33,7 @@ WECHAT_PUBLIC = {
         'redis_subkey': 'huxiu',
     },
     'infoq': {
-        'main_url': 'https://www.wxkol.com/show/infoqchina.html',
+        'main_url': accs['werss_infoq'],
         'source': 'InfoQ',
         'redis_subkey': 'infoq',
     },

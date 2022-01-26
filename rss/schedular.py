@@ -101,18 +101,18 @@ class SchedularManager(object):
 
 
 def rsspy():
-    SchedularManager()\
+    manager = SchedularManager()\
         .add_schedular(LeiPhoneAIRss(shift_time=3600))\
         .add_schedular(HuggingFaceRss(shift_time=3600))\
         .add_schedular(RustLanguageDoc(shift_time=3600 * 24))\
         .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
-        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='infoq'))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
-        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='almosthuman'))\
-        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='yuntoutiao'))\
-        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='rgznnds'))\
-        .add_schedular(WechatRssMonitor(shift_time=10800, wechat_id='aifront'))\
-        .run()
+
+    wechat_ids = ['almosthuman', 'yuntoutiao',
+                  'aifront', 'rgznnds', 'infoq', 'geekpark']
+    for wechat_id in wechat_ids:
+        manager.add_schedular(WechatRssMonitor(10800, wechat_id))
+    manager.run()
 
 
 if __name__ == '__main__':
