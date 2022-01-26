@@ -36,7 +36,6 @@ class DummyItem(NamedTuple):
 class AnyNews(ABC):
     """ check whether any new articles posted in a certain website
     """
-
     def __init__(self, main_url: str):
         self.main_url = main_url
         self.spider = Spider().born()
@@ -78,14 +77,17 @@ class AnyNews(ABC):
     def get_archives(self) -> List[Article]:
         arch = naruto.load(self.redis.get_key,
                            self.type).ensure_nontrivial_return(3, 10)
-        return [Article(**e) for e in json.loads(arch.decode('utf-8'))] if arch else []
+        return [Article(**e)
+                for e in json.loads(arch.decode('utf-8'))] if arch else []
 
     def save_to_redis(self, articles: List[Article]) -> None:
         str_articles = json.dumps([a._asdict() for a in articles],
                                   ensure_ascii=True)
         cf.info('save to redis: {} with key {}'.format(str_articles,
                                                        self.type))
-        self.redis.set_key(self.type, str_articles, ex=60 * 60 * 24 * 30)
+        _f = lambda: self.redis.set_key(
+            self.type, str_articles, ex=60 * 60 * 24 * 30)
+        return naruto.load(_f).ensure_nontrivial_return()
 
     def pipeline(self) -> List[Article]:
         soup = self.get_soup()
