@@ -2,6 +2,7 @@ import random
 import time
 
 import codefast as cf
+from portalocker import redis
 
 from rss.apps.huggingface import HuggingFace
 from rss.apps.leiphone import LeiPhoneAI
@@ -120,11 +121,13 @@ if __name__ == '__main__':
     worker = create_rss_worker('almosthuman')
     worker = create_rss_worker('yuntoutiao')
     latest, all_ = worker.pipeline()
+
     if not latest:
         cf.info('no new articles')
     else:
         worker.save_to_redis(all_)
         cf.info('all articles saved to redis')
         for article in latest:
+            v = cf.b64encode(article.url)
+            key = 'rss_postedurls_{}'.format(v)
             cf.info(article)
-            tcp.post(article.telegram_format())

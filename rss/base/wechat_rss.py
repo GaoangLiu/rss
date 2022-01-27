@@ -31,6 +31,7 @@ class _Feeder(object):
 class WechatRSS(AnyNews):
     ''' Fetch new articles with a paid public aggregator feed service, such as https://werss.app/
     '''
+
     def __init__(self, main_url, source: str = ''):
         super().__init__(main_url)
         self.source = source  # 公众号名称
@@ -41,13 +42,16 @@ class WechatRSS(AnyNews):
         articles = [
             FeedEntryToArticle(entry, self.source) for entry in entries
         ]
-        articles = [a.to_article() for a in articles if a.uid not in seen_ids]
+        articles = [a.to_article() for a in articles if not (
+            a.uid in seen_ids or self.redis.get(cf.b64encode(a.url)))]
         return articles
 
     def pipeline(self) -> List[Article]:
         articles = self.search_articles()
         archives = self.archives
         latest, all_ = self.latest(archives, articles)
+        for a in latest:
+            self.redis.set(cf.b64encode(a.url), '1', ex=3600 * 720)
         return latest, all_
 
 
