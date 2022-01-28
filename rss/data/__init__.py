@@ -17,6 +17,11 @@ WECHAT_PUBLIC = {
         'source': '人工智能那点事',
         'redis_subkey': 'rgznnds',
     },
+    'qqtech': {
+        'main_url': accs['werss_qqtech'],
+        'source': '腾讯科技',
+        'redis_subkey': 'qqtech',
+    },
     'yuntoutiao': {
         'main_url': accs['werss_yuntoutiao'],
         'source': '云头条',

@@ -2,7 +2,6 @@ import random
 import time
 
 import codefast as cf
-from portalocker import redis
 
 from rss.apps.huggingface import HuggingFace
 from rss.apps.leiphone import LeiPhoneAI
@@ -110,7 +109,7 @@ def rsspy():
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
 
     wechat_ids = ['almosthuman', 'yuntoutiao',
-                  'aifront', 'rgznnds', 'infoq', 'geekpark']
+                  'aifront', 'rgznnds', 'infoq', 'geekpark', 'qqtech']
     for wechat_id in wechat_ids:
         manager.add_schedular(WechatRssMonitor(10800, wechat_id))
     manager.run()
