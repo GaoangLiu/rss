@@ -41,7 +41,7 @@ class UrlParser(ABC):
     def fetch_soup(self) -> BeautifulSoup:
         """Return a BeautifulSoup object.
         """
-        response = self.spider.get(self.url)
+        response = self.spider.get(self.url, timeout=30)
         return BeautifulSoup(response.content, 'html.parser')
 
     @abstractmethod

@@ -58,7 +58,7 @@ class AnyNews(ABC):
         return self._archives
 
     def get_soup(self) -> BeautifulSoup:
-        soup = self.spider.get(self.main_url)
+        soup = self.spider.get(self.main_url, timeout=30)
         return BeautifulSoup(soup.content, 'html.parser')
 
     @abstractmethod
