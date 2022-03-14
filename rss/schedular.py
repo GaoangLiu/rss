@@ -1,3 +1,4 @@
+from datetime import datetime
 import random
 import time
 
@@ -10,14 +11,31 @@ from rss.base.wechat_public import create_rss_worker
 from rss.base.wechat_rss import create_rss_worker as create_wechat_rss_worker
 from rss.core.tg import tcp
 from rss.tracker import main as blog_main
+from enum import Enum
+
+
+class PostType(str, Enum):
+    """
+    PostType
+    """
+    IMMEDIATE = 'immediate'
+    EVENING8 = 'evening8'
 
 
 class Schedular(object):
-    def __init__(self, shift_time: int = 3600, add_disturb: bool = True):
-        # Add disturb to avoid multiple updates posted at exactly the same time
+    def __init__(self,
+                 shift_time: int = 3600,
+                 add_disturb: bool = True,
+                 post_type: str = PostType.EVENING8.value):
+        """Add disturb to avoid multiple updates posted at exactly the same time
+        Args:
+            post_type(PostType): whether to post immediately or delay at a certain time, e.g., 20:00 pm
+        """
         self.shift_time = shift_time + \
             (random.randint(-1800, 3600) if add_disturb else 0)
         self.timer = 0
+        self.articles_stack = []
+        self.post_type = post_type
 
     def run(self):
         self.timer += 1
@@ -33,9 +51,23 @@ class Schedular(object):
         else:
             worker.save_to_redis(all_)
             cf.info('all articles saved to redis')
-            for article in latest:
-                cf.info(article)
-                tcp.post(article.telegram_format())
+            if self.post_type == PostType.IMMEDIATE.value:
+                self.articles_stack = []
+                for article in latest:
+                    cf.info(article)
+                    tcp.post(article.telegram_format())
+            else:
+                self.articles_stack.extend(latest)
+                cf.info('articles stack extended to: {}'.format(
+                    self.articles_stack))
+
+            if self.articles_stack:
+                current_hour = datetime.now().hour
+                if current_hour >= 20:
+                    for article in self.articles_stack:
+                        cf.info(article)
+                        tcp.post(article.telegram_format())
+                    self.articles_stack = []
 
 
 class DailyBlogTracker(Schedular):
@@ -89,10 +121,13 @@ class SchedularManager(object):
         self.schedulars.append(schedular)
         return self
 
+    def run_once(self):
+        for schedular in self.schedulars:
+            schedular.run()
+
     def run(self):
         while True:
-            for schedular in self.schedulars:
-                schedular.run()
+            self.run_once()
             time.sleep(1)
             self.timer += 1
             if self.timer >= 60:
@@ -108,8 +143,10 @@ def rsspy():
         .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
         .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
 
-    wechat_ids = ['almosthuman', 'yuntoutiao',
-                  'aifront', 'rgznnds', 'infoq', 'geekpark', 'qqtech']
+    wechat_ids = [
+        'almosthuman', 'yuntoutiao', 'aifront', 'rgznnds', 'infoq', 'geekpark',
+        'qqtech'
+    ]
     for wechat_id in wechat_ids:
         manager.add_schedular(WechatRssMonitor(10800, wechat_id))
     manager.run()
