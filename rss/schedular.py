@@ -1,9 +1,12 @@
-from datetime import datetime
-import random
+import socket
+import threading
 import time
+from enum import Enum
 
 import codefast as cf
+import schedule
 
+from rss.apps.freeapp import publish_feeds
 from rss.apps.huggingface import HuggingFace
 from rss.apps.leiphone import LeiPhoneAI
 from rss.apps.rust import RustLangDoc
@@ -11,7 +14,8 @@ from rss.base.wechat_public import create_rss_worker
 from rss.base.wechat_rss import create_rss_worker as create_wechat_rss_worker
 from rss.core.tg import tcp
 from rss.tracker import main as blog_main
-from enum import Enum
+
+socket.setdefaulttimeout(300)
 
 
 class PostType(str, Enum):
@@ -23,26 +27,18 @@ class PostType(str, Enum):
 
 
 class Schedular(object):
-    def __init__(self,
-                 shift_time: int = 3600,
-                 add_disturb: bool = True,
-                 post_type: str = PostType.EVENING8.value):
+    def __init__(self, post_type: str = PostType.EVENING8.value):
         """Add disturb to avoid multiple updates posted at exactly the same time
         Args:
             post_type(PostType): whether to post immediately or delay at a certain time, e.g., 20:00 pm
         """
-        self.shift_time = shift_time + \
-            (random.randint(-1800, 3600) if add_disturb else 0)
         self.timer = 0
         self.articles_stack = []
         self.post_type = post_type
 
     def run(self):
-        self.timer += 1
-        if self.timer >= self.shift_time:
-            cf.info("schedular: %s is running" % self.__class__.__name__)
-            self.timer = 0
-            self.action()
+        cf.info("schedular: %s is running" % self.__class__.__name__)
+        self.action()
 
     def run_worker(self, worker):
         latest, all_ = worker.pipeline()
@@ -62,17 +58,15 @@ class Schedular(object):
                     self.articles_stack))
 
             if self.articles_stack:
-                current_hour = datetime.now().hour
-                if current_hour >= 20:
-                    for article in self.articles_stack:
-                        cf.info(article)
-                        tcp.post(article.telegram_format())
-                    self.articles_stack = []
+                for article in self.articles_stack:
+                    cf.info(article)
+                    tcp.post(article.telegram_format())
+                self.articles_stack = []
 
 
 class DailyBlogTracker(Schedular):
-    def __init__(self, shift_time: int = 3600 * 24):
-        super().__init__(shift_time=shift_time)
+    def __init__(self):
+        super().__init__()
 
     def action(self):
         cf.info("DailyBlogTracker is running")
@@ -95,8 +89,8 @@ class RustLanguageDoc(Schedular):
 
 
 class WechatPublicRss(Schedular):
-    def __init__(self, shift_time: int = 3600, wechat_id: str = 'almosthuman'):
-        super().__init__(shift_time=shift_time)
+    def __init__(self, wechat_id: str = 'almosthuman'):
+        super().__init__()
         self.worker = create_rss_worker(wechat_id)
 
     def action(self):
@@ -104,8 +98,8 @@ class WechatPublicRss(Schedular):
 
 
 class WechatRssMonitor(Schedular):
-    def __init__(self, shift_time: int = 3600, wechat_id: str = 'almosthuman'):
-        super().__init__(shift_time=shift_time)
+    def __init__(self, wechat_id: str = 'almosthuman'):
+        super().__init__()
         self.worker = create_wechat_rss_worker(wechat_id)
 
     def action(self):
@@ -123,7 +117,10 @@ class SchedularManager(object):
 
     def run_once(self):
         for schedular in self.schedulars:
-            schedular.run()
+            try:
+                threading.Thread(target=schedular.run).start()
+            except Exception as e:
+                cf.error('shcedular {} error: {}'.format(schedular, e))
 
     def run(self):
         while True:
@@ -136,34 +133,24 @@ class SchedularManager(object):
 
 
 def rsspy():
-    manager = SchedularManager()\
-        .add_schedular(LeiPhoneAIRss(shift_time=3600))\
-        .add_schedular(HuggingFaceRss(shift_time=3600))\
-        .add_schedular(RustLanguageDoc(shift_time=3600 * 24))\
-        .add_schedular(DailyBlogTracker(shift_time=3600 * 24))\
-        .add_schedular(WechatPublicRss(shift_time=3600, wechat_id='huxiu'))\
+    manager = SchedularManager()
+    manager.add_schedular(LeiPhoneAIRss())
+    manager.add_schedular(HuggingFaceRss())
+    manager.add_schedular(DailyBlogTracker())
+    manager.add_schedular(WechatPublicRss(wechat_id='huxiu'))
 
     wechat_ids = [
         'almosthuman', 'yuntoutiao', 'aifront', 'rgznnds', 'infoq', 'geekpark',
         'qqtech'
     ]
     for wechat_id in wechat_ids:
-        manager.add_schedular(WechatRssMonitor(10800, wechat_id))
+        manager.add_schedular(WechatRssMonitor(wechat_id))
     manager.run()
 
 
 if __name__ == '__main__':
-    from rss.base.wechat_rss import create_rss_worker
-    worker = create_rss_worker('almosthuman')
-    worker = create_rss_worker('yuntoutiao')
-    latest, all_ = worker.pipeline()
-
-    if not latest:
-        cf.info('no new articles')
-    else:
-        worker.save_to_redis(all_)
-        cf.info('all articles saved to redis')
-        for article in latest:
-            v = cf.b64encode(article.url)
-            key = 'rss_postedurls_{}'.format(v)
-            cf.info(article)
+    schedule.every().day.at("20:20").do(rsspy)
+    schedule.every(3).to(6).hours.do(publish_feeds)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
