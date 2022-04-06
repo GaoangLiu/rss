@@ -58,40 +58,27 @@ class AnyNews(ABC):
         return self._archives
 
     def get_soup(self) -> BeautifulSoup:
-        soup = self.spider.get(self.main_url, timeout=30)
+        soup = self.spider.get(self.main_url)
         return BeautifulSoup(soup.content, 'html.parser')
 
     @abstractmethod
     def search_articles(self, soup: BeautifulSoup) -> List[Article]:
         pass
 
-    def latest(self, old: List[Article],
-               new: List[Article]) -> Tuple[List[Article]]:
-        # Return a tuple: (the latest articles, all articles)
-        old_ids = set([e.uid for e in old])
-        latest_ids = set([e.uid for e in new if e.uid not in old_ids])
-        latest = [e for e in new if e.uid in latest_ids]
-        all_ = latest + old
-        return latest, all_
+    def latest(self, new: List[Article]) -> List[Article]:
+        # Return the latest articles list
+        return [e for e in new if not self.redis.exists(e.uid)]
 
     def get_archives(self) -> List[Article]:
-        arch = naruto.load(self.redis.get_key,
-                           self.type).ensure_nontrivial_return(3, 10)
-        return [Article(**e)
-                for e in json.loads(arch.decode('utf-8'))] if arch else []
+        return []
 
-    def save_to_redis(self, articles: List[Article]) -> None:
-        str_articles = json.dumps([a._asdict() for a in articles],
-                                  ensure_ascii=True)
-        cf.info('save to redis: {} with key {}'.format(str_articles,
-                                                       self.type))
-        _f = lambda: self.redis.set_key(
-            self.type, str_articles, ex=60 * 60 * 24 * 30)
-        return naruto.load(_f).ensure_nontrivial_return()
+    def save_to_redis(self, articles: List[Article]) -> bool:
+        for art in articles:
+            self.redis.set_key(art.uid, 1, ex=864000)
+        return True
 
     def pipeline(self) -> List[Article]:
         soup = self.get_soup()
         articles = self.search_articles(soup)
-        archives = self.get_archives()
-        latest, all_ = self.latest(archives, articles)
-        return latest, all_
+        articles = self.latest(articles)
+        return articles

@@ -31,28 +31,22 @@ class _Feeder(object):
 class WechatRSS(AnyNews):
     ''' Fetch new articles with a paid public aggregator feed service, such as https://werss.app/
     '''
-
     def __init__(self, main_url, source: str = ''):
         super().__init__(main_url)
         self.source = source  # 公众号名称
 
     def search_articles(self) -> List[Article]:
-        seen_ids = [a.uid for a in self.archives]
         entries = feedparser.parse(self.main_url, agent=_Feeder.AGENT).entries
         articles = [
             FeedEntryToArticle(entry, self.source) for entry in entries
         ]
-        articles = [a.to_article() for a in articles if not (
-            a.uid in seen_ids or self.redis.get(cf.b64encode(a.url)))]
+        articles = [a.to_article() for a in articles]
         return articles
 
     def pipeline(self) -> List[Article]:
         articles = self.search_articles()
-        archives = self.archives
-        latest, all_ = self.latest(archives, articles)
-        for a in latest:
-            self.redis.set(cf.b64encode(a.url), '1', ex=3600 * 720)
-        return latest, all_
+        articles = self.latest(articles)
+        return articles
 
 
 def worker_factory(main_url: str, source, redis_subkey: str) -> WechatRSS:

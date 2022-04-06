@@ -85,6 +85,7 @@ class Worker(object):
                 cf.info('posting feed \n{}'.format(feed.tweets_format()))
                 return
 
+
 def publish_feeds():
     worker = Worker()
     worker.post_tweets()

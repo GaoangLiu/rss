@@ -22,8 +22,8 @@ class BlogTracker(object):
         return dict((key, value.dict()) for key, value in results.items())
 
     def _query_old(self) -> Dict:
-        return json.loads(self.redis.get_key('rss_{}'.format(
-            self.parser.name)))
+        res = self.redis.get_key('rss_{}'.format(self.parser.name))
+        return json.loads(res) if res else {}
 
     def _query_digest(self, old: Dict, new: Dict) -> List[Tuple]:
         # Get to be posted contents.
@@ -34,7 +34,7 @@ class BlogTracker(object):
         cf.info('found new blog', str(diff))
         cf.info('results stored in redis', redis_key)
         new.update(old)
-        self.redis.set_key(redis_key, json.dumps(new), ex=86400 * 30)
+        self.redis.set_key(redis_key, json.dumps(new), ex=86400 * 7)
         return [(key, new[key]) for key in diff]
 
     def track(self) -> List[Dict]:

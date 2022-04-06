@@ -27,41 +27,29 @@ class PostType(str, Enum):
 
 
 class Schedular(object):
-    def __init__(self, post_type: str = PostType.EVENING8.value):
+    def __init__(self):
         """Add disturb to avoid multiple updates posted at exactly the same time
         Args:
             post_type(PostType): whether to post immediately or delay at a certain time, e.g., 20:00 pm
         """
         self.timer = 0
         self.articles_stack = []
-        self.post_type = post_type
 
     def run(self):
         cf.info("schedular: %s is running" % self.__class__.__name__)
         self.action()
 
     def run_worker(self, worker):
-        latest, all_ = worker.pipeline()
+        latest = worker.pipeline()
         if not latest:
-            cf.info('no new articles')
+            cf.info('no new articles for {}'.format(worker.__class__.__name__))
         else:
-            worker.save_to_redis(all_)
+            worker.save_to_redis(latest)
             cf.info('all articles saved to redis')
-            if self.post_type == PostType.IMMEDIATE.value:
-                self.articles_stack = []
-                for article in latest:
-                    cf.info(article)
-                    tcp.post(article.telegram_format())
-            else:
-                self.articles_stack.extend(latest)
-                cf.info('articles stack extended to: {}'.format(
-                    self.articles_stack))
-
-            if self.articles_stack:
-                for article in self.articles_stack:
-                    cf.info(article)
-                    tcp.post(article.telegram_format())
-                self.articles_stack = []
+            self.articles_stack = []
+            for article in latest:
+                cf.info(article)
+                tcp.post(article.telegram_format())
 
 
 class DailyBlogTracker(Schedular):
@@ -123,13 +111,8 @@ class SchedularManager(object):
                 cf.error('shcedular {} error: {}'.format(schedular, e))
 
     def run(self):
-        while True:
-            self.run_once()
-            time.sleep(1)
-            self.timer += 1
-            if self.timer >= 60:
-                cf.info("SchedularManager is running")
-                self.timer = 0
+        cf.info('schedular manager is running')
+        self.run_once()
 
 
 def rsspy():
@@ -149,7 +132,9 @@ def rsspy():
 
 
 if __name__ == '__main__':
+    schedule.every().day.at("12:20").do(rsspy)
     schedule.every().day.at("20:20").do(rsspy)
+
     schedule.every(3).to(6).hours.do(publish_feeds)
     while True:
         schedule.run_pending()
