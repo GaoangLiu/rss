@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from email import message
 import hashlib
 from hmac import digest
 from typing import NamedTuple
@@ -8,6 +9,7 @@ import feedparser
 from authc import get_redis
 from bs4 import BeautifulSoup
 from dofast.cell.api import API
+from rss.apps.bark import BarkErrorAlert
 
 
 class FeedBody(NamedTuple):
@@ -81,9 +83,13 @@ class Worker(object):
     def post_tweets(self):
         for feed in self.feeder.get_feeds():
             if self.is_feed_new(feed):
-                self.api.twitter.post([feed.tweets_format()])
-                cf.info('posting feed \n{}'.format(feed.tweets_format()))
-                return
+                try:
+                    self.api.twitter.post([feed.tweets_format()])
+                    cf.info('posting feed \n{}'.format(feed.tweets_format()))
+                    return
+                except Exception as e:
+                    BarkErrorAlert(title='FREEAPP推送失败', message=str(e)).send()
+                    cf.error('posting feed failed', e)
 
 
 def publish_feeds():

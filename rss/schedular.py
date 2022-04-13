@@ -128,7 +128,12 @@ def rsspy():
     ]
     for wechat_id in wechat_ids:
         manager.add_schedular(WechatRssMonitor(wechat_id))
-    manager.run()
+    try:
+        manager.run()
+    except Exception as e:
+        from rss.apps.bark import ErrorAlert
+        ErrorAlert.send(title="RSSPY RUN FAILURE", message=str(e))
+        cf.error('rsspy run failure', e)
 
 
 if __name__ == '__main__':
