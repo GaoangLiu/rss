@@ -1,6 +1,8 @@
+from email import message
 import requests
 import os
 import codefast as cf
+from rss.apps.device import DeviceInfo
 
 
 class BarkErrorAlert(object):
@@ -13,12 +15,12 @@ class BarkErrorAlert(object):
 
     def send(self):
         try:
-            path = cf.urljoin(
-                self.barkhost, '/{}/{}?icon={}'.format(self.title, self.message, self.icon))
+            msg = f'{DeviceInfo()}: {self.message}'
+            path = f'{self.barkhost}/{self.title}/{msg}?icon={self.icon}'
             path = path.replace(' ', '%20')
             requests.post(path)
         except Exception as e:
-            cf.error(str(self.__class__.__name__) + ': ' + str(e))
+            cf.error(f'{self.__class__.__name__}: {e}')
 
 
 class ErrorAlert(object):

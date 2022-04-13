@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from email import message
 import hashlib
+from email import message
 from hmac import digest
 from typing import NamedTuple
 
@@ -9,6 +9,7 @@ import feedparser
 from authc import get_redis
 from bs4 import BeautifulSoup
 from dofast.cell.api import API
+
 from rss.apps.bark import BarkErrorAlert
 
 
