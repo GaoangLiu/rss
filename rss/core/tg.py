@@ -6,6 +6,11 @@ from rss.core import AuthOnce
 from rss.data import TELEGRAM
 
 
+def post_tweet(text: str)->None:
+    from dofast.data.dynamic import TOKEN, SERVER_HOST
+    cf.net.post(SERVER_HOST, params={'text': text, 'token': TOKEN})
+
+
 class Telegram(object):
     @staticmethod
     def post_to_channel(bot: str,

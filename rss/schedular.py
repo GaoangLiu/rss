@@ -12,8 +12,9 @@ from rss.apps.leiphone import LeiPhoneAI
 from rss.apps.rust import RustLangDoc
 from rss.base.wechat_public import create_rss_worker
 from rss.base.wechat_rss import create_rss_worker as create_wechat_rss_worker
-from rss.core.tg import tcp
+from rss.core.tg import tcp, post_tweet
 from rss.tracker import main as blog_main
+from ojbk import report_self
 
 socket.setdefaulttimeout(300)
 
@@ -119,7 +120,7 @@ def rsspy():
     manager = SchedularManager()
     manager.add_schedular(LeiPhoneAIRss())
     manager.add_schedular(HuggingFaceRss())
-    manager.add_schedular(DailyBlogTracker())
+    # manager.add_schedular(DailyBlogTracker())
     manager.add_schedular(WechatPublicRss(wechat_id='huxiu'))
 
     wechat_ids = [
@@ -128,8 +129,10 @@ def rsspy():
     ]
     for wechat_id in wechat_ids:
         manager.add_schedular(WechatRssMonitor(wechat_id))
+
     try:
         manager.run()
+        report_self('RSS')
     except Exception as e:
         from rss.apps.bark import ErrorAlert
         ErrorAlert.send(title="RSSPY RUN FAILURE", message=str(e))
@@ -137,10 +140,8 @@ def rsspy():
 
 
 if __name__ == '__main__':
-    schedule.every().day.at("12:20").do(rsspy)
-    schedule.every().day.at("20:20").do(rsspy)
-
-    schedule.every(3).to(6).hours.do(publish_feeds)
+    schedule.every(3).to(6).minutes.do(publish_feeds)
+    schedule.every(3).to(6).minutes.do(rsspy)
     while True:
         schedule.run_pending()
         time.sleep(1)

@@ -22,10 +22,14 @@ class Article(NamedTuple):
 
     def telegram_format(self) -> str:
         short_url = shorten_url(self.url)
-        msg = 'Title: {}\nURL: {}'.format(self.title, short_url)
-        if self.source:
-            msg += '\nSource: {}'.format(self.source)
+        source = '%23' + (self.source if self.source else 'source_unknown')
+        msg = '{} {} \n\n{}'.format(self.title, source, short_url)
         return msg
+
+    def tweet_format(self) -> str:
+        from dofast.network import bitly
+        short_url = bitly(self.url)
+        return self.title + '\n' + short_url
 
 
 class DummyItem(NamedTuple):

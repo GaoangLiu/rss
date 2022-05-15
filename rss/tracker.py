@@ -47,6 +47,11 @@ class BlogTracker(object):
         tb = TextBody(**dict_)
         return str(tb)
 
+    def telegram_format(self, dict_: Dict) -> str:
+        tb = TextBody(**dict_)
+        msg = '{} ({}) %23Blog \n\n{}'.format(tb.title, tb.date, tb.url)
+        return msg
+
 
 def main():
     for _, v in BLOG_SOURCES.items():
@@ -55,4 +60,4 @@ def main():
 
         for digest in bt.track():
             cf.info(bt.format(digest))
-            tcp.post(bt.format(digest))
+            tcp.post(bt.telegram_format(digest))
