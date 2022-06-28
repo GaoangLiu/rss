@@ -1,10 +1,11 @@
+from sched import scheduler
 import socket
 import threading
 import time
 from enum import Enum
 
 import codefast as cf
-import schedule
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from rss.apps.freeapp import publish_feeds
 from rss.apps.huggingface import HuggingFace
@@ -140,8 +141,14 @@ def rsspy():
 
 
 if __name__ == '__main__':
-    schedule.every(3).to(6).minutes.do(publish_feeds)
-    schedule.every(3).to(6).minutes.do(rsspy)
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=publish_feeds, trigger='interval', seconds=60)
+    scheduler.add_job(func=rsspy,
+                      trigger='cron',
+                      hour="8-20",
+                      minute='*/7',
+                      timezone='Asia/Shanghai')
+    scheduler.start()
+    cf.info('rss scheduler started')
     while True:
-        schedule.run_pending()
         time.sleep(1)
